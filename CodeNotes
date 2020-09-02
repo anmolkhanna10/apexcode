@@ -1,0 +1,31 @@
+//CODE NOTES FOR REFERENCE
+//When trying to reference a field in an inner query: 
+List<Survey__c> currentSurveyL=[Select s.Survey_Name__c, Work_Plan__r.Name__c,Count_Required__c, 
+                                           (Select Name, id, Master_Violation__c, External_Id__c, Question__c, 
+                                            Position__c, Section__c, Alert__c,Help__c, Custom_Picklist_Values__c 
+                                            From Survey_Questions__r
+                                            WHERE Metro_Area__c includes (:Survey_ResponseL[0].Site__r.Metro_Market__c, '')
+                                            order by Position__c),
+                                           (Select Name, id, UniqueQuestionResponse__c, Question__c, 
+                                            CreatedDate, SurveyQuestion__c, Send_To_Help_FOS_Team__c, 
+                                            Survey_Question__c,Answer__c, Section__c, Comment__c, Count__c, Custom_Picklist_Response__c 
+                                            From Survey_Question_Responses__r where Survey_Response__c=:SurveyRequestId)
+                                From Survey__c s where id=:SurveyId];
+
+          for(Survey__c surveyQuestion: currentSurveyL){
+             for(Survey_Question__c sQ: surveyQuestion.Survey_Questions__r){
+                 if(sQ.Section__c == null){
+                   //enter logic here 
+                 }
+              }
+          }
+
+
+//Custom setting data for a future date 
+Car_Stock_Cut_Off__c carStockCutOffSetting = Car_Stock_Cut_Off__c.getOrgDefaults();
+carStockCutOffSetting.Car_Stock_Cutoff_Date__c = system.today().addDays(1);
+update carStockCutOffSetting;
+
+//execute batch file from anonymous apex 
+Database.executeBatch(new MyClass());
+Id batchJobId = Database.executeBatch(new RunThisBatch(), 200);
