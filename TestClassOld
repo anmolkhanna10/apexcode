@@ -1,87 +1,24 @@
 @isTest
-private class AttendanceTriggerHandlerTest
+private class AttendanceTriggerHandlerTest 
 {
-    //Method to insert and return Account record.
-    private static Account insertAccount(String strName)
-    {
-       Account objAccount = new Account(Name = strName);
-        objAccount.Time_Zone__c = '(GMT-03:00) Atlantic Daylight Time (America/Halifax)';
-        insert objAccount;
-        return objAccount;
-    }
 
-    //Method to insert and return Contact record.
-    private static Contact insertContact(String strFName, String strLName, Id accountId)
+    private static testMethod void TestAttendanceTriggerHandler() 
     {
-       Contact objContact = new Contact(FirstName = strFName,
-                                        LastName = strLName,
-                                        AccountId = accountId);
+        Account objAccount = new Account(Name = 'Test Account - 01', Time_Zone__c = '(GMT-03:00) Atlantic Daylight Time (America/Halifax)');
+        insert objAccount; 
+        
+        Contact objContact = new Contact(FirstName = 'Test', LastName = 'Contact - 01', AccountId = objAccount.Id);
         insert objContact;
-        return objContact;
-    }
-
-    //Method to insert and return Listing record.
-    private static Listing__c insertListing(String strName)
-    {
-       Listing__c objListing = new Listing__c(Name = strName);
+        
+        Contact objContact2 = new Contact(FirstName = 'Test', LastName =  'Contact - 02', AccountId = objAccount.Id);
+        insert objContact2;
+        
+        ByPassSessionRegTrigger__c sessReg = new ByPassSessionRegTrigger__c(Disabled_Waiver_Authorization__c = false);
+        insert sessReg;
+        
+        Listing__c objListing = new Listing__c(Name = 'Test Listing - 01');
         insert objListing;
-        return objListing;
-    }
-
-    //Method to insert and return Listing record.
-    private static Listing_Session__c insertListSession(String strName, Id listingId, DateTime dtSessionStart, DateTime dtSessionEnd, String strPPLR)
-    {
-       Listing_Session__c objListSession = new Listing_Session__c(Name = strName,
-                                                                  Listing__c = listingId,
-                                                                  Session_End_Date_Time__c = dtSessionEnd,
-                                                                  Session_Start_Date_Time__c = dtSessionStart,
-                                                                  Primary_Program_Level_Restriction__c = strPPLR);
-        insert objListSession;
-        return objListSession;
-    }
-
-    //Method to insert and return Classes record.
-    private static Classes__c insertClasses(String strName, Id listSesId)
-    {
-       Classes__c objClasses = new Classes__c(Name = strName,
-                                              Listing_Session__c = listSesId);
-        insert objClasses;
-        return objClasses;
-    }
-
-    //Method to insert and return Session Registration record.
-    private static Session_Registration__c insertSesRegistration(Id contactId, Id listSesId)
-    {
-       Session_Registration__c objSesReg = new Session_Registration__c(Contact__c = contactId,
-                                                                       Listing_Session__c = listSesId);
-        insert objSesReg;
-        return objSesReg;
-    }
-
-    //Method to insert and return Attendance record.
-    private static Attendance__c createAttendance(Id classId, Id sesRegId, Boolean isAttended)
-    {
-       Attendance__c objAttendance = new Attendance__c(Classes__c = classId,
-                                                       Attended__c = isAttended,
-                                                       Session_Registration__c = sesRegId);
-        return objAttendance;
-    }
-
-    //Method to insert and return Engagement Type record.
-    private static Engagement_Type__c insertEngType(Id contactId)
-    {
-        Engagement_Type__c objEngType = new Engagement_Type__c(Contact__c = contactId);
-        insert objEngType;
-        return objEngType;
-    }
-
-    private static testMethod void TestAttendanceTriggerHandler()
-    {
-        Account objAccount = insertAccount('Test Account - 01');
-        Contact objContact = insertContact('Test', 'Contact - 01', objAccount.Id);
-        Contact objContact2 = insertContact('Test', 'Contact - 02', objAccount.Id);
-
-        Listing__c objListing = insertListing('Test Listing - 01');
+        
         List<Listing_Session__c> listingSessionToInsert = new List<Listing_Session__c>();
         Listing_Session__c objLSPar = new Listing_Session__c(Name = 'Test LS Par', Listing__c=objListing.Id, Session_Start_Date_Time__c=DateTime.Now(), Session_End_Date_Time__c=DateTime.Now().addDays(4),Primary_Program_Level_Restriction__c='');
         listingSessionToInsert.add(objLSPar);
@@ -94,93 +31,96 @@ private class AttendanceTriggerHandlerTest
         Listing_Session__c objLSPlayer = new Listing_Session__c(Name='Test LS Player', Listing__c=objListing.Id, Session_Start_Date_Time__c=DateTime.Now(), Session_End_Date_Time__c=DateTime.Now().addDays(12), Primary_Program_Level_Restriction__c='');
         listingSessionToInsert.add(objLSPlayer);
         insert listingSessionToInsert;
-
-        Classes__c objClassPar = insertClasses('Test Class Par', objLSPar.Id);
-        Classes__c objClassAce = insertClasses('Test Class Ace', objLSAce.Id);
-        Classes__c objClassEagle = insertClasses('Test Class Eagle', objLSEagle.Id);
-        Classes__c objClassBirdie = insertClasses('Test Class Birdie', objLSBirdie.Id);
-        Classes__c objClassPlayer = insertClasses('Test Class Player', objLSPlayer.Id);
-
-        Session_Registration__c objSesRegPar = insertSesRegistration(objContact.Id, objLSPar.Id);
-        Test.startTest();
-        Session_Registration__c objSesRegAce = insertSesRegistration(objContact.Id, objLSAce.Id);
-        Session_Registration__c objSesRegEagle = insertSesRegistration(objContact.Id, objLSEagle.Id);
-        Session_Registration__c objSesRegBirdie = insertSesRegistration(objContact.Id, objLSBirdie.Id);
-        Session_Registration__c objSesRegPlayer = insertSesRegistration(objContact.Id, objLSPlayer.Id);
-
+        
+        List<Classes__c> lstClassesToUpdate = new List<Classes__c>();
+        lstClassesToUpdate.add(new Classes__c(Name = 'Test Class Par',Listing_Session__c = objLSPar.Id));
+        lstClassesToUpdate.add(new Classes__c(Name = 'Test Class Ace',Listing_Session__c = objLSAce.Id));
+        lstClassesToUpdate.add(new Classes__c(Name = 'Test Class Eagle',Listing_Session__c = objLSEagle.Id));
+        lstClassesToUpdate.add(new Classes__c(Name = 'Test Class Birdie',Listing_Session__c = objLSBirdie.Id));
+        lstClassesToUpdate.add(new Classes__c(Name = 'Test Class Player',Listing_Session__c = objLSPlayer.Id));
+        upsert lstClassesToUpdate;
+        
+        List<Session_Registration__c> lstSessionRegistrationToUpdate = new List<Session_Registration__c>();
+        lstSessionRegistrationToUpdate.add(new Session_Registration__c(Contact__c = objContact.Id,Listing_Session__c = objLSPar.Id));
+        lstSessionRegistrationToUpdate.add(new Session_Registration__c(Contact__c = objContact.Id,Listing_Session__c = objLSAce.Id));
+        lstSessionRegistrationToUpdate.add(new Session_Registration__c(Contact__c = objContact.Id,Listing_Session__c = objLSEagle.Id));
+        lstSessionRegistrationToUpdate.add(new Session_Registration__c(Contact__c = objContact.Id,Listing_Session__c = objLSBirdie.Id));
+        lstSessionRegistrationToUpdate.add(new Session_Registration__c(Contact__c = objContact.Id,Listing_Session__c = objLSPlayer.Id));
+        upsert lstSessionRegistrationToUpdate;
+        
         List<Listing_Session__c> lstListSessionToUpdate = new List<Listing_Session__c>();
         lstListSessionToUpdate.add(new Listing_Session__c(Id = objLSPar.Id, Primary_Program_Level_Restriction__c = 'Par'));
         lstListSessionToUpdate.add(new Listing_Session__c(Id = objLSAce.Id, Primary_Program_Level_Restriction__c = 'Ace'));
         lstListSessionToUpdate.add(new Listing_Session__c(Id = objLSEagle.Id, Primary_Program_Level_Restriction__c = 'Eagle'));
         lstListSessionToUpdate.add(new Listing_Session__c(Id = objLSBirdie.Id, Primary_Program_Level_Restriction__c = 'Birdie'));
         lstListSessionToUpdate.add(new Listing_Session__c(Id = objLSPlayer.Id, Primary_Program_Level_Restriction__c = 'PLAYer'));
-        update lstListSessionToUpdate;
-
-        Engagement_Type__c objEngType = insertEngType(objContact.Id);
-        Engagement_Type__c objEngType2 = insertEngType(objContact2.Id);
-
+        upsert lstListSessionToUpdate;
+        
+        Engagement_Type__c objEngType = new Engagement_Type__c(Contact__c = objContact.Id);
+        insert objEngType;
+        
+        Engagement_Type__c objEngType2 = new Engagement_Type__c(Contact__c = objContact2.Id);
+        insert objEngType2;
+        
         List<Attendance__c> lstAttendanceToInsert = new List<Attendance__c>();
-
-        lstAttendanceToInsert.add(createAttendance(objClassPar.Id, objSesRegPar.Id, true));
-        lstAttendanceToInsert.add(createAttendance(objClassAce.Id, objSesRegAce.Id, true));
-        lstAttendanceToInsert.add(createAttendance(objClassEagle.Id, objSesRegEagle.Id, true));
-        lstAttendanceToInsert.add(createAttendance(objClassBirdie.Id, objSesRegBirdie.Id, true));
-        lstAttendanceToInsert.add(createAttendance(objClassPlayer.Id, objSesRegPlayer.Id, true));
-
-        lstAttendanceToInsert.add(createAttendance(objClassPar.Id, objSesRegPar.Id, true));
-        lstAttendanceToInsert.add(createAttendance(objClassAce.Id, objSesRegAce.Id, true));
-        lstAttendanceToInsert.add(createAttendance(objClassEagle.Id, objSesRegEagle.Id, true));
-        lstAttendanceToInsert.add(createAttendance(objClassBirdie.Id, objSesRegBirdie.Id, true));
-        lstAttendanceToInsert.add(createAttendance(objClassPlayer.Id, objSesRegPlayer.Id, true));
+        lstAttendanceToInsert.add(new Attendance__c(Classes__c = lstClassesToUpdate[0].Id, Session_Registration__c = lstSessionRegistrationToUpdate[0].Id, Attended__c = true));
+        lstAttendanceToInsert.add(new Attendance__c(Classes__c = lstClassesToUpdate[1].Id, Session_Registration__c = lstSessionRegistrationToUpdate[1].Id, Attended__c = true));
+        lstAttendanceToInsert.add(new Attendance__c(Classes__c = lstClassesToUpdate[2].Id, Session_Registration__c = lstSessionRegistrationToUpdate[2].Id, Attended__c = true));
+        lstAttendanceToInsert.add(new Attendance__c(Classes__c = lstClassesToUpdate[3].Id, Session_Registration__c = lstSessionRegistrationToUpdate[3].Id, Attended__c = true));
+        lstAttendanceToInsert.add(new Attendance__c(Classes__c = lstClassesToUpdate[4].Id, Session_Registration__c = lstSessionRegistrationToUpdate[4].Id, Attended__c = true));
         insert lstAttendanceToInsert;
-
+        
         List<Attendance__c> lstAttendance = new List<Attendance__c>([SELECT Id, Attended__c, Session_Registration__r.Listing_Session__r.Primary_Program_Level_Restriction__c FROM Attendance__c]);
         delete lstAttendance;
-
         undelete lstAttendance;
-
+        
         List<Attendance__c> lstAttendanceToupdate = new List<Attendance__c>();
         for(Attendance__c objAttendance : lstAttendance)
         {
             objAttendance.Attended__c = false;
             lstAttendanceToupdate.add(objAttendance);
         }
-
+                
         update lstAttendanceToUpdate;
-
-        Test.stopTest();
+        
     }
     public static testmethod void testParticipationStatus() {
-
-        Account objAccount = insertAccount('Test Account - 01');
-        Contact objContact = insertContact('Test', 'Contact - 01', objAccount.Id);
-
-        Listing__c objListing = insertListing('Test Listing - 01');
-
-        Listing_Session__c objLSPar = insertListSession('Test LS Par', objListing.Id, DateTime.Now(), DateTime.Now().addDays(4), '');
-
-
-        Classes__c objClassPar = insertClasses('Test Class Par', objLSPar.Id);
-
-
-        Session_Registration__c objSesRegPar = insertSesRegistration(objContact.Id, objLSPar.Id);
-
+        
+        Account objAccount = new Account(Name = 'Test Account - 01', Time_Zone__c = '(GMT-03:00) Atlantic Daylight Time (America/Halifax)');
+        insert objAccount;
+        
+        Contact objContact = new Contact(FirstName = 'Test', LastName = 'Contact - 01', AccountId = objAccount.Id);
+        insert objContact; 
+        
+        ByPassSessionRegTrigger__c sessReg = new ByPassSessionRegTrigger__c(Disabled_Waiver_Authorization__c = false);
+        insert sessReg;
+        
+        Listing__c objListing = new Listing__c(Name = 'Test Listing - 01');
+        insert objListing;
+        
+        Listing_Session__c objLSPar = new Listing_Session__c(Name = 'Test LS Par', Listing__c=objListing.Id, Session_Start_Date_Time__c=DateTime.Now(), Session_End_Date_Time__c=DateTime.Now().addDays(4),Primary_Program_Level_Restriction__c='');
+ 		insert objLSPar;
+        
+        Classes__c cls = new Classes__c(Name = 'Test Class Par', Listing_Session__c = objLSPar.Id);
+        insert cls;
+        
+        Session_Registration__c sReg = new Session_Registration__c(Contact__c = objContact.Id,Listing_Session__c = objLSPar.Id);
+        insert sReg;
+        
         Id recordTypeId = Schema.SObjectType.Engagement_Type__c.getRecordTypeInfosByName().get('Participant').getRecordTypeId();
-
+        
         Engagement_Type__c objEngType = new Engagement_Type__c(Contact__c = objContact.Id, Participation_Status__c = 'Previous Participant', RecordtypeId = recordTypeId);
         insert objEngType;
-
+        
         system.debug('++++++++'+objEngType );
-
+        
         System.debug('Engagement Type==='+[Select Id,Participation_Status__c From Engagement_Type__c Where Id =: objEngType.Id]);
-
+        
         List<Attendance__c> lstAttendanceToInsert = new List<Attendance__c>();
-
-        lstAttendanceToInsert.add(createAttendance(objClassPar.Id, objSesRegPar.Id, true));
-
-        insert lstAttendanceToInsert;
-
+        lstAttendanceToInsert.add(new Attendance__c(Classes__c = cls.Id, Session_Registration__c = sReg.Id, Attended__c = true));        
+        upsert lstAttendanceToInsert;
+        
         System.assertEquals(1, [Select Id From  Engagement_Type__c where Participation_Status__c = 'Participant'].size());
-
+        
     }
 }
